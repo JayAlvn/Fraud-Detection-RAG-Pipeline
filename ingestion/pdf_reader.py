@@ -5,7 +5,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 def load_pdf(path: str) -> str:
-
     logging.info(f"loading the pdf: {path}")
     try:
         reader = PdfReader(path)

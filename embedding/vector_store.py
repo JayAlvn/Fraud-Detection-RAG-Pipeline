@@ -3,10 +3,12 @@ import chromadb
 from .embedder import embed_batch, embed_text
 
 client = chromadb.PersistentClient(path='./chroma_db')
+
 collection = client.get_or_create_collection('fraud_rag')
 
 
 def store_chunks(chunks: list[str], doc_name: str):
+    
     embeddings = embed_batch(chunks)
 
     ids = [f'{doc_name}_chunk_{i}' for i in range(len(chunks))]
