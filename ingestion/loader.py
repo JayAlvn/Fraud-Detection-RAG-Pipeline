@@ -4,6 +4,7 @@ from ingestion.docx_reader import load_docx
 from ingestion.text_reader import load_txt
 
 def load_document(path: str) -> str:
+    
     extract = os.path.splitext(path)[1].lower()
 
     loaders = {

@@ -3,7 +3,6 @@ import chromadb
 from .embedder import embed_batch, embed_text
 
 client = chromadb.PersistentClient(path='./chroma_db')
-
 collection = client.get_or_create_collection('fraud_rag')
 
 
