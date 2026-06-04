@@ -1,4 +1,3 @@
-from docx.text.paragraph import Paragraph
 from pypdf import PdfReader
 import logging
 
