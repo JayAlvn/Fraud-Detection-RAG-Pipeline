@@ -1,6 +1,13 @@
+import pytest
 from docx import Document
+from pathlib import Path
 
 from ingestion import chunk_text, load_docx, load_pdf, load_txt
+
+SAMPLE_TEST = Path(__file__).parent / "fixtures" / "Architecture.pdf"
+
+if not SAMPLE_TEST.exists():
+    pytest.skip("sample.pdf fixture is not present", allow_module_level=True)
 
 
 def test_txt_returns_text(tmp_path):
@@ -12,12 +19,14 @@ def test_txt_returns_text(tmp_path):
 
 
 def test_pdf_returns_text():
-    text = load_pdf("/home/ubuntu/Desktop/RAG Architecture.pdf")
+    text = load_pdf(str(SAMPLE_TEST))
     assert len(text) > 100
 
 
 def test_chunks_are_correct_size():
     chunks = chunk_text("word " * 2000)
+    assert len(chunks) > 1
+    assert all(c.strip() for c in chunks)
     assert all(len(c) <= 600 for c in chunks)
 
 
