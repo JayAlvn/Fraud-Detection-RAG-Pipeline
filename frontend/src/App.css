@@ -1,0 +1,53 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --border: oklch(0.922 0 0);
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--border-color, oklch(0.922 0 0));
+  }
+  body {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Subtle separator adjustments fitting active background color variables */
+.panel-separator {
+  flex-shrink: 0;
+  width: 1px;
+  background-color: var(--border-color);
+  transition: background-color 0.15s ease, width 0.15s ease;
+}
+
+.panel-separator:hover {
+  width: 4px;
+  background-color: var(--accent-color);
+}
+
+[data-panel] {
+  overflow: hidden;
+}
