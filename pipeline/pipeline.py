@@ -8,7 +8,7 @@ BACKENDS = {
     "naive": NaiveRAG()
 }
 
-def run_rag_pipeline(doc_path: str, user_query: str,  mode: str="naive") -> dict:
+def run_pipeline(doc_path: str, user_query: str,  mode: str="naive") -> dict:
 
     text = load_document(doc_path)
     chunks = chunk_text(text)
