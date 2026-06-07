@@ -16,7 +16,7 @@ def store_chunks(chunks: list[str], doc_name: str):
 
  #will automatically default to returning the top 5 matches.
 def query(query_text: str, n=5) -> list[str]:
-    #converting query to numbers
+    
     query_vector = embed_text(query_text)
     results = collection.query(query_embeddings=[query_vector], n_results =n)
     return results['documents'][0]
