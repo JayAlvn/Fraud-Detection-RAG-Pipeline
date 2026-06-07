@@ -16,7 +16,7 @@ class NaiveRAG(Base):
         return {
 
             "finding": finding,
-            "sources":chunk,
+            "sources": chunks,
             "confidence": 0.0,
             "mode": "naive"
         }
