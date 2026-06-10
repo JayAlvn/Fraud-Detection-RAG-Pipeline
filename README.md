@@ -1,4 +1,4 @@
-# Fraud-Detection-RAG-Pipeline-FRAG-
+# Fraud-Detection-RAG-Pipeline-FRAG
 A Python-based Retrieval-Augmented Generation (RAG) pipeline for enterprise 
 document verification and fraud detection.
 
