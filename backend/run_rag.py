@@ -7,7 +7,7 @@ user_query = "What is Architecture in the small?"
 result= run_pipeline(
     "tests/fixtures/Architecture.pdf",
     user_query,
-    mode="naive"
+    mode="semantic search"
 )
 
 print()

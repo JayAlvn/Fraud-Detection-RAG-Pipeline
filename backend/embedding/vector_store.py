@@ -14,7 +14,7 @@ def store_chunks(chunks: list[str], doc_name: str):
     collection.add(documents=chunks, embeddings=embeddings, ids=ids)
 
 
-def query(query_text: str, n=2) -> list[str]:
+def query(query_text: str, n=1) -> list[str]:
 
     query_vector = embed_text(query_text)
     results = collection.query(query_embeddings=[query_vector], n_results =n)

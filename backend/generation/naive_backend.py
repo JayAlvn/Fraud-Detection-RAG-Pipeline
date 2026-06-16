@@ -1,6 +1,6 @@
 from generation.base import Base
 
-class NaiveRAG(Base):
+class NaiveBackend(Base):
 
     def generate(self, query: str, chunks: list[str]) -> dict:
 
@@ -18,7 +18,7 @@ class NaiveRAG(Base):
             "finding": finding,
             "sources": chunks,
             "confidence": 0.0,
-            "mode": "naive"
+            "mode": "semantic search (retrieval only)"
         }
 
         
