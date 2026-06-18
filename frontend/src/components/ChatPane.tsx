@@ -4,15 +4,31 @@ export function ChatPane() {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [input, setInput] = useState('');
 
-  const sendMessage = () => {
+
+  const sendMessage = async () => {
     if (!input.trim()) return;
+  
     const userMsg = { role: 'user' as const, content: input };
     setMessages(prev => [...prev, userMsg]);
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'assistant', content: `Echo: ${input}` }]);
-    }, 500);
+  
+    const question = input;   // save it before we clear the box
     setInput('');
+  
+    try {
+      const response = await fetch('http://localhost:8000/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: question }),
+      });
+  
+      const data = await response.json();
+  
+      setMessages(prev => [...prev, { role: 'assistant', content: data.finding }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Error: could not reach backend.' }]);
+    }
   };
+
 
   return (
     <div
