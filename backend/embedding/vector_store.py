@@ -11,7 +11,7 @@ def store_chunks(chunks: list[str], doc_name: str):
     embeddings = embed_batch(chunks)
     ids = [f'{doc_name}_chunk_{i}' for i in range(len(chunks))]
 
-    collection.add(documents=chunks, embeddings=embeddings, ids=ids)
+    collection.upsert(documents=chunks, embeddings=embeddings, ids=ids)
 
 
 def query(query_text: str, n=2) -> list[str]:
