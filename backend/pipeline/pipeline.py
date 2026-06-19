@@ -2,8 +2,9 @@ import os
 from ingestion import load_document, clean_text, chunk_text
 from embedding.vector_store import store_chunks, query
 from generation.naive_backend import NaiveBackend
+from generation.basic_backend import BasicBackend
 
-BACKENDS = {"naive": NaiveBackend()}
+BACKENDS = {"naive": NaiveBackend(), "basic": BasicBackend()}
 
 
 def ingest(doc_path: str) -> int:
