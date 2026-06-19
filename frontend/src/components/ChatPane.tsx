@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 
-export function ChatPane() {
+type ChatPaneProps = {
+  onCitations: (sources: string[]) => void;
+};
+
+export function ChatPane({ onCitations }: ChatPaneProps) {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [input, setInput] = useState('');
 
@@ -18,6 +22,7 @@ export function ChatPane() {
       });
       const data = await response.json();
       setMessages(prev => [...prev, { role: 'assistant', content: data.finding }]);
+      onCitations(data.sources ?? []);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Error: could not reach backend.' }]);
     }

@@ -12,6 +12,9 @@ const DEFAULT_LAYOUT = { left: 55, chat: 25, files: 20 } as const;
 function App() {
   const [visible, setVisible] = useState({ chat: true });
   const [theme, setTheme] = useState<ThemeColors>(THEMES[0].colors);
+
+  // Citations live here so ChatPane (writes) and ContextPane (reads) can share them.
+  const [citations, setCitations] = useState<string[]>([]);
   
   // Bumping this key remounts the panel Group, which snaps all panes back to default sizes.
   const [layoutKey, setLayoutKey] = useState(0);
@@ -99,14 +102,14 @@ function App() {
         
         {visible.chat && (
           <Panel id="chat" defaultSize={DEFAULT_LAYOUT.chat} minSize={20} className="min-w-0" style={{ borderLeft: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)' }}>
-            <ChatPane />
+            <ChatPane onCitations={setCitations} />
           </Panel>
         )}
         
         <Separator className="panel-separator" />
         
         <Panel id="files" defaultSize={DEFAULT_LAYOUT.files} minSize={15} className="min-w-0">
-          <ContextPane />
+          <ContextPane citations={citations} />
         </Panel>
       </Group>
     </div>

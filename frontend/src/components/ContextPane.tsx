@@ -1,7 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { MoreHorizontalIcon, FileIcon, XIcon, UploadIcon } from './Icons';
 
-export function ContextPane() {
+type ContextPaneProps = {
+  citations: string[];
+};
+
+export function ContextPane({ citations }: ContextPaneProps) {
   const [documents, setDocuments] = useState<{ id: string; name: string; chunks: number; tokens: number }[]>([
     { id: '1', name: 'attention_paper.pdf', chunks: 42, tokens: 1820 },
     { id: '2', name: 'notes.txt', chunks: 8, tokens: 310 },
@@ -71,6 +75,24 @@ export function ContextPane() {
             <span style={{ color: 'var(--text-muted)' }}>Available</span>
           </div>
         </div>
+      </div>
+      <hr style={{ borderColor: 'var(--border-color)' }} className="mb-5" />
+
+      {/* Retrieved Citations Section */}
+      <div className="mb-5">
+        <h3 className="text-[11px] font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--text-muted)' }}>Retrieved Citations</h3>
+        {citations.length === 0 ? (
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Ask a question to see the passages used.</p>
+        ) : (
+          <div className="space-y-2">
+            {citations.map((passage, idx) => (
+              <div key={idx} className="p-3 border rounded-xl" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--accent-color)' }}>Source {idx + 1}</p>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-main)' }}>{passage}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <hr style={{ borderColor: 'var(--border-color)' }} className="mb-5" />
 
