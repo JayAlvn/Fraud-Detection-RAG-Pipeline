@@ -40,7 +40,6 @@ async def upload(file: UploadFile = File(...)):
         "chunks_indexed":count,
     }
 
-
 @app.post("/query")
 def query_endpoint(request: QueryRequest):
     return answer_query(request.query, request.mode)

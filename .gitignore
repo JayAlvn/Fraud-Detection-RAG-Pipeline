@@ -1,0 +1,9 @@
+ollama_models/
+venv/
+__pycache__/
+*.pyc
+backend/chroma_db/
+backend/uploads/
+.env
+README
+

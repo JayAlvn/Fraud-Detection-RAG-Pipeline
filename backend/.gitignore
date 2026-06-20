@@ -30,3 +30,17 @@ tree.txt
 project_structure.txt
 X.png
 PROGRESSDOC.md
+
+
+
+ollama_models/
+
+venv/
+__pycache__/
+*.pyc
+
+backend/chroma_db/
+
+backend/uploads/
+
+.env

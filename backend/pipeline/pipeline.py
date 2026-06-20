@@ -1,16 +1,19 @@
 import os
-from ingestion import load_document, chunk_text
+from ingestion import load_document, chunk_text, clean_text
 from embedding.vector_store import store_chunks, query
-from generation.naive_backend import NaiveBackend
 
+from generation.naive_backend import NaiveBackend
+from generation.basic_backend import BasicBackend
 
 BACKENDS = {
-    "naive": NaiveBackend()
+    "naive": NaiveBackend(),
+    "basic": BasicBackend()
 }
 
 
 def ingest(doc_path: str) -> int:
     text = load_document(doc_path)
+    text = clean_text(text)
     chunks = chunk_text(text)
     doc_name = os.path.basename(doc_path)
     store_chunks(chunks, doc_name)
@@ -18,7 +21,7 @@ def ingest(doc_path: str) -> int:
     return len(chunks)
 
 
-def answer_query(user_query: str, mode: str="naive") -> dict:
+def answer_query(user_query: str, mode: str="basic") -> dict:
     if mode not in BACKENDS:
         raise ValueError(f"Uknown mode: {mode}")
 
@@ -28,6 +31,6 @@ def answer_query(user_query: str, mode: str="naive") -> dict:
     return backend.generate(user_query, top_chunks)
 
 
-def run_pipeline(doc_path: str, user_query: str,  mode: str="naive") -> dict:
+def run_pipeline(doc_path: str, user_query: str,  mode: str="basic") -> dict:
     ingest(doc_path)
     return answer_query(user_query, mode)
