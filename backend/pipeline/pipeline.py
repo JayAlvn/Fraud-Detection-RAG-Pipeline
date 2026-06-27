@@ -23,26 +23,19 @@ def ingest(doc_path: str) -> int:
 def _calculate_relevance_score(distance: float) -> float:
     return round (1 / (1 + distance), 3)
 
-def answer_query(user_query: str, mode: str="basic", source: str | None = None) -> dict:
-
+def answer_query(user_query: str, mode: str = "basic", source: str | None = None) -> dict:
     if mode not in BACKENDS:
-        raise ValueError(f"Uknown mode: {mode}")
+        raise ValueError(f"Unknown mode: {mode}")
 
-    top_chunks, distances = query(user_query)
+    top_chunks, distances = query(user_query, source=source)
+
     result = BACKENDS[mode].generate(user_query, top_chunks)
-
+    
     result["retrieval"] = [
-        {
-            "source": f"Source {index + 1}",
-            "score": _calculate_relevance_score(dist),
-           
-        }
-
+        {"source": f"Source {index + 1}", "score": _calculate_relevance_score(dist)}
         for index, dist in enumerate(distances)
     ]
-
     return result
-
 
 def run_pipeline(doc_path: str, user_query: str,  mode: str="basic") -> dict:
     ingest(doc_path)
