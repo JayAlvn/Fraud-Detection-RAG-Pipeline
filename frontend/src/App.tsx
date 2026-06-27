@@ -1,28 +1,63 @@
 import React, { useState } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { THEMES, ThemeColors } from './lib/themes';
-import { MessageSquareIcon, RefreshIcon } from './components/Icons';
+import { MessageSquareIcon } from './components/Icons';
+import { FindingPane } from './components/FindingPane';
+import { CitationPane } from './components/CitationPane';
 import { ChatPane } from './components/ChatPane';
 import { ContextPane } from './components/ContextPane';
-import { EmptyPane } from './components/EmptyPane';
 import './App.css';
 
-const DEFAULT_LAYOUT = { left: 55, chat: 25, files: 20 } as const;
+type Message = { role: 'user' | 'assistant'; content: string };
+type Retrieval = { source: string; score: number };
+type Risk = { level: string; score: number; factors: { name: string; weight: number }[] };
 
 function App() {
-  const [visible, setVisible] = useState({ chat: true });
   const [theme, setTheme] = useState<ThemeColors>(THEMES[0].colors);
-  
-  // Bumping this key remounts the panel Group, which snaps all panes back to default sizes.
+  const [finding, setFinding] = useState('');
+  const [citations, setCitations] = useState<string[]>([]);
+  const [retrieval, setRetrieval] = useState<Retrieval[]>([]);
+  const [mode, setMode] = useState<'naive' | 'basic'>('naive');
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatVisible, setChatVisible] = useState(true);
   const [layoutKey, setLayoutKey] = useState(0);
+  const [risk, setRisk] = useState<Risk>({ level: '', score: 0, factors: [] });
 
-  const togglePanel = (key: keyof typeof visible) => {
-    setVisible(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const resetLayout = () => {
-    setVisible({ chat: true });
-    setLayoutKey(k => k + 1);
+  const sendPrompt = async (prompt: string) => {
+    setMessages(prev => [...prev, { role: 'user', content: prompt }]);
+    setLoading(true);
+    setFinding('');
+    try {
+      const res = await fetch('http://localhost:8000/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: prompt, mode }),
+      });
+      if (!res.ok) {
+        const detail = await res.text();
+        throw new Error(`HTTP ${res.status} — ${detail}`);
+      }
+      const data = await res.json();
+      setFinding(data.finding);
+      setCitations(data.sources ?? []);
+      setRetrieval(data.retrieval ?? []);
+      setRisk({
+        level: data.risk_level ?? '',
+        score: data.risk_score ?? 0,
+        factors: data.factors ?? [],
+      });
+      setMessages(prev => [...prev, { role: 'assistant', content: data.finding }]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setFinding(`Error: ${msg}`);
+      setCitations([]);
+      setRetrieval([]);
+      setRisk({ level: '', score: 0, factors: [] });
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${msg}` }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,32 +75,24 @@ function App() {
         '--accent-text': theme.accentText,
       } as React.CSSProperties}
     >
-      {/* Toolbar Row */}
+      {/* Toolbar */}
       <div className="absolute top-1.5 right-4 z-50">
         <div
           className="flex items-center gap-1 p-1 rounded-lg border shadow-sm backdrop-blur-md"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}
         >
           <button
-            onClick={() => togglePanel('chat')}
+            onClick={() => { setChatVisible(v => !v); setLayoutKey(k => k + 1); }}
             className="p-1.5 rounded transition-all"
-            style={visible.chat ? { backgroundColor: 'var(--panel-bg)', color: 'var(--text-main)' } : { color: 'var(--text-muted)' }}
+            style={chatVisible
+              ? { backgroundColor: 'var(--panel-bg)', color: 'var(--text-main)' }
+              : { color: 'var(--text-muted)' }}
             title="Toggle Chat"
           >
             <MessageSquareIcon />
           </button>
-          <button
-            onClick={resetLayout}
-            className="p-1.5 rounded transition-all"
-            style={{ color: 'var(--text-muted)' }}
-            title="Reset Layout"
-          >
-            <RefreshIcon />
-          </button>
-          <div className="w-px h-4 self-center mx-1.5" style={{ backgroundColor: 'var(--border-color)' }} />
-          
-          {/* Theme Switcher */}
-          <div className="flex items-center gap-1.5 px-1.5">
+          <div className="w-px h-4 self-center mx-1" style={{ backgroundColor: 'var(--border-color)' }} />
+          <div className="flex items-center gap-1.5 px-1">
             {THEMES.map((t) => (
               <button
                 key={t.name}
@@ -73,7 +100,7 @@ function App() {
                 className="w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 focus:outline-none"
                 style={{
                   background: `linear-gradient(135deg, ${t.colors.bg} 50%, ${t.colors.panelBg} 50%)`,
-                  borderColor: theme.bg === t.colors.bg ? 'var(--text-main)' : 'rgba(0,0,0,0.15)'
+                  borderColor: theme.bg === t.colors.bg ? 'var(--text-main)' : 'rgba(0,0,0,0.15)',
                 }}
                 title={t.name}
               />
@@ -82,32 +109,57 @@ function App() {
         </div>
       </div>
 
-      {/* Main Panels Area */}
-      <Group
-        key={layoutKey}
-        orientation="horizontal"
-        defaultLayout={DEFAULT_LAYOUT}
-        className="h-full w-full"
-      >
-        <Panel id="left" defaultSize={DEFAULT_LAYOUT.left} minSize={15} className="min-w-0">
-          <EmptyPane />
+      {/* Main Layout */}
+      <Group key={layoutKey} orientation="horizontal" className="h-full w-full">
+
+        {/* Left: Finding (top half) + Citations (bottom half) */}
+        <Panel id="left" defaultSize={40} minSize={20} className="min-w-0">
+          <div className="flex flex-col h-full">
+            <div className="flex-1 min-h-0 overflow-hidden" style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <FindingPane
+                finding={finding}
+                loading={loading}
+                mode={mode}
+                risk={risk}
+                accent={theme.accent}
+              />
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <CitationPane
+                citations={citations}
+                retrieval={retrieval}
+                accent={theme.accent}
+              />
+            </div>
+          </div>
         </Panel>
-        
-        {visible.chat && (
-          <Separator className="panel-separator" />
-        )}
-        
-        {visible.chat && (
-          <Panel id="chat" defaultSize={DEFAULT_LAYOUT.chat} minSize={20} className="min-w-0" style={{ borderLeft: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)' }}>
-            <ChatPane />
+
+        {chatVisible && <Separator className="panel-separator" />}
+        {chatVisible && (
+          <Panel
+            id="chat"
+            defaultSize={35}
+            minSize={20}
+            className="min-w-0"
+            style={{ borderLeft: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)' }}
+          >
+            <ChatPane
+              messages={messages}
+              onSend={sendPrompt}
+              loading={loading}
+              mode={mode}
+              setMode={setMode}
+            />
           </Panel>
         )}
-        
+
         <Separator className="panel-separator" />
-        
-        <Panel id="files" defaultSize={DEFAULT_LAYOUT.files} minSize={15} className="min-w-0">
+
+        {/* Right: Files + Context Window */}
+        <Panel id="files" defaultSize={25} minSize={15} className="min-w-0">
           <ContextPane />
         </Panel>
+
       </Group>
     </div>
   );
