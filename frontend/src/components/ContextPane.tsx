@@ -1,21 +1,34 @@
 import React, { useState, useRef } from 'react';
 import { MoreHorizontalIcon, FileIcon, XIcon, UploadIcon } from './Icons';
 
+type Doc = { id: string; name: string; chunks: number };
+
 export function ContextPane() {
-  const [documents, setDocuments] = useState<{ id: string; name: string; chunks: number; tokens: number }[]>([
-    { id: '1', name: 'attention_paper.pdf', chunks: 42, tokens: 1820 },
-    { id: '2', name: 'notes.txt', chunks: 8, tokens: 310 },
-  ]);
+  const [documents, setDocuments] = useState<Doc[]>([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (file: File) => {
-    const newDoc = {
-      id: Math.random().toString(36).substring(2, 9),
-      name: file.name,
-      chunks: Math.floor(Math.random() * 20) + 1,
-      tokens: Math.floor(Math.random() * 1000) + 100,
-    };
-    setDocuments(prev => [...prev, newDoc]);
+  const handleFile = async (file: File) => {
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('http://localhost:8000/upload', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const detail = await res.text();
+        throw new Error(`HTTP ${res.status} — ${detail}`);
+      }
+      const data = await res.json();
+      setDocuments(prev => [
+        ...prev,
+        { id: Math.random().toString(36).substring(2, 9), name: data.filename, chunks: data.chunks_indexed },
+      ]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Upload failed: ${msg}`);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -23,7 +36,6 @@ export function ContextPane() {
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   };
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,16 +43,14 @@ export function ContextPane() {
     if (e.target) e.target.value = '';
   };
 
-  const removeDoc = (id: string) => {
-    setDocuments(prev => prev.filter(doc => doc.id !== id));
-  };
+  const removeDoc = (id: string) => setDocuments(prev => prev.filter(d => d.id !== id));
 
   return (
     <div
       className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto p-5"
       style={{ backgroundColor: 'var(--panel-bg)', color: 'var(--text-main)' }}
       onDrop={handleDrop}
-      onDragOver={handleDragOver}
+      onDragOver={(e) => e.preventDefault()}
     >
       {/* Context Window Section */}
       <div className="mb-5">
@@ -80,35 +90,38 @@ export function ContextPane() {
         <div className="space-y-2">
           {documents.map(doc => (
             <div key={doc.id} className="flex items-center justify-between p-3 border rounded-xl transition-colors" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 border rounded-lg shadow-sm" style={{ backgroundColor: 'var(--panel-bg)', borderColor: 'var(--border-color)' }}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-1.5 border rounded-lg shadow-sm shrink-0" style={{ backgroundColor: 'var(--panel-bg)', borderColor: 'var(--border-color)' }}>
                   <FileIcon />
                 </div>
-                <div>
-                  <p className="text-sm font-medium leading-tight">{doc.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{doc.chunks} chunks · {doc.tokens.toLocaleString()} tokens</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium leading-tight truncate">{doc.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{doc.chunks} chunks indexed</p>
                 </div>
               </div>
-              <button onClick={() => removeDoc(doc.id)} style={{ color: 'var(--text-muted)' }} className="p-1 hover:text-white transition-colors">
+              <button onClick={() => removeDoc(doc.id)} style={{ color: 'var(--text-muted)' }} className="p-1 shrink-0 hover:text-white transition-colors">
                 <XIcon />
               </button>
             </div>
           ))}
-          
+
           {/* Upload Dropzone */}
           <div
             className="mt-2 cursor-pointer rounded-xl border border-dashed py-6 px-4 text-center transition flex flex-col items-center gap-2 hover:bg-[var(--border-color)]"
-            style={{ borderColor: 'var(--border-color)' }}
-            onClick={() => fileInputRef.current?.click()}
+            style={{ borderColor: uploading ? 'var(--accent-color)' : 'var(--border-color)' }}
+            onClick={() => !uploading && fileInputRef.current?.click()}
           >
             <div style={{ color: 'var(--text-muted)' }} className="mb-1">
               <UploadIcon />
             </div>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Drop file or click to add</p>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              {uploading ? 'Uploading…' : 'Drop file or click to add'}
+            </p>
             <input
               type="file"
               ref={fileInputRef}
               onChange={handleFileSelect}
+              accept=".pdf,.txt,.docx"
               className="hidden"
             />
           </div>
