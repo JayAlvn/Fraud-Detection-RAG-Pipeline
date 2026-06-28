@@ -48,23 +48,62 @@ A normal reference document (configuration-management notes) is correctly scored
 
 ## Architecture
 
-```
-            ┌─────────────────────────── Frontend (Tauri + React) ───────────────────────────┐
-            │  Finding + Risk gauge  │  Chat  │  Citations + relevance  │  Documents + tokens  │
-            └───────────────────────────────────────┬───────────────────────────────────────-─┘
-                                                     │ HTTP (JSON)
-            ┌────────────────────────────────────────▼───────────────────────────────────────┐
-            │                          Backend (FastAPI — api.py)                              │
-            │   /upload   /query   /document/{name}   /health                                  │
-            └───────┬───────────────────────────────────────────────────────┬─────────────────┘
-                    │                                                        │
-         ingestion (load → clean → chunk)                    generation (naive | basic)
-                    │                                                        │
-            embedding (all-MiniLM-L6-v2) ───► ChromaDB ◄─── retrieval        └─► Ollama (llama3.2)
-```
+```mermaid
+flowchart TB
+    subgraph FE["Frontend · Tauri + React"]
+        direction LR
+        F1["Finding + Risk gauge"]
+        F2["Chat"]
+        F3["Citations + relevance"]
+        F4["Documents + tokens"]
+    end
 
----
+    subgraph BE["Backend · FastAPI &#40;api.py&#41;"]
+        direction LR
+        UP["POST /upload"]
+        QY["POST /query"]
+        DOC["DELETE /document"]
+        HL["GET /health"]
+    end
 
+    subgraph PL["Pipeline"]
+        direction TB
+        ING["Ingestion<br/><i>load → clean → chunk</i>"]
+        EMB["Embedding<br/><i>all-MiniLM-L6-v2</i>"]
+        RET["Retrieval"]
+        GEN["Generation<br/><i>naive | basic</i>"]
+    end
+
+    DB[("ChromaDB<br/>vector store")]
+    LLM(["Ollama · llama3.2"])
+
+    FE ==>|"HTTP / JSON"| BE
+
+    UP --> ING
+    ING --> EMB
+    EMB ==> DB
+
+    QY --> RET
+    DB ==> RET
+    RET --> GEN
+    GEN -.->|"basic mode only"| LLM
+    LLM -.-> GEN
+
+    DOC -->|"remove chunks"| DB
+    GEN ==>|"finding · risk · citations"| FE
+
+    classDef fe fill:#0f2747,stroke:#3b82f6,stroke-width:1px,color:#dbeafe;
+    classDef be fill:#0f3320,stroke:#22c55e,stroke-width:1px,color:#dcfce7;
+    classDef pl fill:#27272a,stroke:#a1a1aa,stroke-width:1px,color:#fafafa;
+    classDef store fill:#27214d,stroke:#818cf8,stroke-width:1px,color:#e0e7ff;
+    classDef model fill:#3a2a14,stroke:#f59e0b,stroke-width:1px,color:#fde68a;
+
+    class F1,F2,F3,F4 fe;
+    class UP,QY,DOC,HL be;
+    class ING,EMB,RET,GEN pl;
+    class DB store;
+    class LLM model;
+```
 ## Tech stack
 
 | Layer | Tech |
