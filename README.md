@@ -50,16 +50,14 @@ A normal reference document (configuration-management notes) is correctly scored
 
 ```mermaid
 flowchart TB
-    subgraph FE["Frontend · Tauri + React"]
-        direction LR
+    subgraph FE["Frontend — Tauri + React"]
         F1["Finding + Risk gauge"]
         F2["Chat"]
         F3["Citations + relevance"]
         F4["Documents + tokens"]
     end
 
-    subgraph BE["Backend · FastAPI &#40;api.py&#41;"]
-        direction LR
+    subgraph BE["Backend — FastAPI"]
         UP["POST /upload"]
         QY["POST /query"]
         DOC["DELETE /document"]
@@ -67,11 +65,10 @@ flowchart TB
     end
 
     subgraph PL["Pipeline"]
-        direction TB
-        ING["Ingestion<br/><i>load → clean → chunk</i>"]
-        EMB["Embedding<br/><i>all-MiniLM-L6-v2</i>"]
-        RET["Retrieval"]
-        GEN["Generation<br/><i>naive | basic</i>"]
+        ING["Ingestion<br/>load → clean → chunk"]
+        EMB["Embedding<br/>all-MiniLM-L6-v2"]
+        RET["Retrieval<br/>hybrid: dense + sparse"]
+        GEN["Generation<br/>naive | basic"]
     end
 
     DB[("ChromaDB<br/>vector store")]
@@ -92,11 +89,11 @@ flowchart TB
     DOC -->|"remove chunks"| DB
     GEN ==>|"finding · risk · citations"| FE
 
-    classDef fe fill:#0f2747,stroke:#3b82f6,stroke-width:1px,color:#dbeafe;
-    classDef be fill:#0f3320,stroke:#22c55e,stroke-width:1px,color:#dcfce7;
-    classDef pl fill:#27272a,stroke:#a1a1aa,stroke-width:1px,color:#fafafa;
-    classDef store fill:#27214d,stroke:#818cf8,stroke-width:1px,color:#e0e7ff;
-    classDef model fill:#3a2a14,stroke:#f59e0b,stroke-width:1px,color:#fde68a;
+    classDef fe fill:#0f2747,stroke:#3b82f6,color:#dbeafe;
+    classDef be fill:#0f3320,stroke:#22c55e,color:#dcfce7;
+    classDef pl fill:#27272a,stroke:#a1a1aa,color:#fafafa;
+    classDef store fill:#27214d,stroke:#818cf8,color:#e0e7ff;
+    classDef model fill:#3a2a14,stroke:#f59e0b,color:#fde68a;
 
     class F1,F2,F3,F4 fe;
     class UP,QY,DOC,HL be;
